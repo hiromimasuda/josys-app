@@ -1,0 +1,165 @@
+{
+  "schemaVersion": "1.0.0",
+  "kind": "FABLE_BUILD_INPUT_PACKET",
+  "packet": {
+    "id": "JOSYS-OPS-NAV-FABLE5-INPUT-001",
+    "version": "1.0.0",
+    "asOf": "2026-07-17",
+    "locale": "ja-JP",
+    "timezone": "Asia/Tokyo",
+    "status": "READY_FOR_GATE_0"
+  },
+  "product": {
+    "id": "JOSYS_OPS_NAVIGATOR",
+    "role": "OPERATIONAL_CONTROL_PLANE",
+    "masterDocumentId": "JOSYS-OPS-NAV-FABLE5-001",
+    "masterVersion": "1.0.1",
+    "mustNotBecome": [
+      "EMPLOYEE_MASTER",
+      "CREDENTIAL_STORE",
+      "CONTRACT_DOCUMENT_STORE",
+      "RAW_LOG_WAREHOUSE",
+      "AUTONOMOUS_ADMIN_TOOL"
+    ]
+  },
+  "authority": {
+    "sourceOfTruth": "02_MASTER_SPEC.snapshot.md",
+    "controlManifest": "01_MANIFEST.json",
+    "seedContract": "05_SEED_SCHEMA.json",
+    "precedence": [
+      "02_MASTER_SPEC.snapshot.md",
+      "01_MANIFEST.json",
+      "05_SEED_SCHEMA.json",
+      "04_SEED_BUNDLE.json",
+      "06_GATE_ACCEPTANCE_CHECKLIST.md"
+    ],
+    "conflictAction": "RECORD_CONFLICT_AND_STOP_AFFECTED_WORK",
+    "newerTimestampAutoWins": false,
+    "aiMayResolveConflict": false
+  },
+  "inputFiles": [
+    {"path": "00_READ_ME_FIRST.md", "role": "HUMAN_HANDOFF_GUIDE", "required": true},
+    {"path": "01_MANIFEST.json", "role": "CONTROL_MANIFEST", "required": true},
+    {"path": "02_MASTER_SPEC.snapshot.md", "role": "REQUIREMENTS_MASTER_SNAPSHOT", "required": true},
+    {"path": "03A_GATE0_START_PROMPT.txt", "role": "GATE_0_ENTRYPOINT", "required": true},
+    {"path": "03B_GATE1_CONTINUE_PROMPT.txt", "role": "GATE_1_AUTHORIZATION", "required": true},
+    {"path": "03C_GATE2_CONTINUE_PROMPT.txt", "role": "GATE_2_AUTHORIZATION", "required": true},
+    {"path": "04_SEED_BUNDLE.json", "role": "SANITIZED_CANONICAL_FIXTURE", "required": true},
+    {"path": "05_SEED_SCHEMA.json", "role": "FIXTURE_SCHEMA", "required": true},
+    {"path": "06_GATE_ACCEPTANCE_CHECKLIST.md", "role": "HUMAN_ACCEPTANCE_CONTROL", "required": true},
+    {"path": "07_SHA256SUMS.txt", "role": "DETACHED_INTEGRITY", "required": true},
+    {"path": "08_VERIFY_PACKET.ps1", "role": "READ_ONLY_PREFLIGHT_VALIDATOR", "required": true}
+  ],
+  "accessPolicy": {
+    "readSelection": "EXACT_PACKET_ALLOWLIST_ONLY",
+    "recursiveParentScanAllowed": false,
+    "followSymlinks": false,
+    "pathTraversalAllowed": false,
+    "inputDirectoryMutable": false,
+    "writeRoot": "IMPLEMENTATION_REPO_ROOT_EXCLUDING_DOCS_INPUT",
+    "forbiddenPatterns": [
+      "**/.env",
+      "**/.env.*",
+      "**/*credential*",
+      "**/*secret*",
+      "**/*private_key*",
+      "**/*.pem",
+      "**/*.key",
+      "**/*.p12",
+      "**/*.pfx",
+      "**/.git/**",
+      "**/node_modules/**",
+      "**/outputs/90_履歴/**",
+      "**/reference_update_backups/**",
+      "**/logs/**",
+      "**/*.xlsx",
+      "**/*.xls",
+      "**/*.csv",
+      "**/*.pdf",
+      "**/*.docx"
+    ]
+  },
+  "executionContract": {
+    "initialAuthorizedGate": "G0",
+    "maximumAuthorizedGate": "G2",
+    "stageAuthorizationFiles": {
+      "G0": "03A_GATE0_START_PROMPT.txt",
+      "G1": "03B_GATE1_CONTINUE_PROMPT.txt",
+      "G2": "03C_GATE2_CONTINUE_PROMPT.txt"
+    },
+    "humanCheckpointRequiredBetweenGates": true,
+    "humanAcceptanceMayNotBeSelfSigned": true,
+    "companyApprovedBuildAgentAccountRequired": true,
+    "unapprovedPersonalAccountAllowed": false,
+    "unauthorizedGates": ["G3", "G4", "G5"],
+    "productionWritesAllowed": false,
+    "productionDeploymentAllowed": false,
+    "productionConnectionsAllowed": false,
+    "externalNotificationsAllowed": false,
+    "permissionChangesAllowed": false,
+    "destructiveActionsAllowed": false,
+    "externalActionRunnerMode": "DISABLED_STUB_ONLY",
+    "packageDownloadPolicy": "OPERATOR_TOOL_APPROVAL_REQUIRED",
+    "globalPackageInstallAllowed": false,
+    "applicationRuntimeExternalNetworkAllowed": false,
+    "telemetryAllowed": false
+  },
+  "factModel": {
+    "labels": ["CONFIRMED", "PROPOSED", "NEEDS_CONFIRMATION", "CONFLICTING"],
+    "unresolvedFactPolicy": "DO_NOT_SEED_AS_CONFIRMED",
+    "operationalPriorityRowsProvided": false,
+    "operationalPriorityMissingValue": null,
+    "eventOperationMappingsStatus": "PROPOSED"
+  },
+  "expectedCounts": {
+    "flows": 11,
+    "operations": 43,
+    "eventTemplates": 15,
+    "acceptanceCriteria": 24
+  },
+  "fixturePolicy": {
+    "syntheticOnly": true,
+    "realPersonNamesAllowed": false,
+    "realEmployeeIdsAllowed": false,
+    "realExternalUrlsAllowed": false,
+    "placeholderDomain": "example.invalid",
+    "demoCaseMarkerRequired": true,
+    "sourceApprovedForAiDefault": false,
+    "productionSeedAllowed": false,
+    "datetimeStorage": "UTC",
+    "datetimeDisplay": "Asia/Tokyo"
+  },
+  "openDecisions": [
+    {"id": "D-01", "topic": "product owner and operations administrator", "requiredBefore": "G3", "status": "OPEN"},
+    {"id": "D-02", "topic": "Google Cloud project budget and billing owner", "requiredBefore": "G3", "status": "OPEN"},
+    {"id": "D-03", "topic": "login group and production roles", "requiredBefore": "G3", "status": "OPEN"},
+    {"id": "D-04", "topic": "approved Drive folders", "requiredBefore": "G3", "status": "OPEN"},
+    {"id": "D-05", "topic": "latest Sheet export and production seed", "requiredBefore": "G3", "status": "OPEN"},
+    {"id": "D-06", "topic": "Docs and Sheet authority boundary", "requiredBefore": "G3", "status": "OPEN"},
+    {"id": "D-07", "topic": "official intake channel", "requiredBefore": "G3", "status": "OPEN"},
+    {"id": "D-08", "topic": "incident severity and close approval", "requiredBefore": "G3", "status": "OPEN"},
+    {"id": "D-09", "topic": "contract backup and automation authorities", "requiredBefore": "G3", "status": "OPEN"},
+    {"id": "D-10", "topic": "AI provider contract and data terms", "requiredBefore": "G4", "status": "OPEN"},
+    {"id": "D-11", "topic": "retention period", "requiredBefore": "G3", "status": "OPEN"},
+    {"id": "D-12", "topic": "Guidebook publication flow", "requiredBefore": "G4_IF_ENABLED", "status": "OPEN"},
+    {"id": "D-13", "topic": "Emergency Pack contacts", "requiredBefore": "G3", "status": "OPEN"},
+    {"id": "D-14", "topic": "successor walkthrough date and scenarios", "requiredBefore": "G1_HUMAN_ACCEPTANCE", "status": "OPEN"}
+  ],
+  "requiredOutputs": {
+    "G0": ["PACKET_VALIDATION.md", "IMPLEMENTATION_PLAN.md", "RISK_REGISTER.md", "SPEC_TRACEABILITY.md"],
+    "G1": ["GATE_1_REPORT.md", "screenshots/desktop", "screenshots/mobile", "WALKTHROUGH_CHECKLIST.md"],
+    "G2": ["GATE_2_REPORT.md", "README.md", "RUNBOOK.md", "SECURITY.md", "DEPLOYMENT_NOT_EXECUTED.md", "SPEC_IMPLEMENTATION_MATRIX.md", "TEST_REPORT.md", "docs/build-packet"]
+  },
+  "completionClaims": {
+    "G0": "PASSED_OR_BLOCKED",
+    "G1WithoutHumanSignoff": "IMPLEMENTATION_COMPLETE_HUMAN_ACCEPTANCE_PENDING",
+    "G2WithoutHumanSignoff": "TECHNICALLY_COMPLETE_BUSINESS_ACCEPTANCE_PENDING",
+    "G3ToG5": "NOT_AUTHORIZED"
+  },
+  "integrity": {
+    "algorithm": "SHA-256",
+    "hashFile": "07_SHA256SUMS.txt",
+    "hashFileExcludesItself": true,
+    "mismatchAction": "BLOCK_GATE_0"
+  }
+}

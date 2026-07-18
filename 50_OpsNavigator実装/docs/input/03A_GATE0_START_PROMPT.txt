@@ -1,0 +1,65 @@
+あなたは「情シス Ops Navigator」の実装責任者です。
+
+今回はGate 0だけを実施してください。02_MASTER_SPEC.snapshot.mdの21章末尾にある「Gate 2まで自律的に進める」より、この開始指示の停止条件を優先します。Gate 0の返却物を作成したら、コード実装へ進まず停止してください。
+
+作業ディレクトリ:
+- 現在の実装repoルート
+
+入力:
+- docs/input/00_READ_ME_FIRST.md
+- docs/input/01_MANIFEST.json
+- docs/input/02_MASTER_SPEC.snapshot.md
+- docs/input/04_SEED_BUNDLE.json
+- docs/input/05_SEED_SCHEMA.json
+- docs/input/06_GATE_ACCEPTANCE_CHECKLIST.md
+- docs/input/07_SHA256SUMS.txt
+- docs/input/08_VERIFY_PACKET.ps1
+
+最初に行うこと:
+1. CLAUDE.mdと上記入力を省略せず読む。
+2. `pwsh -File docs/input/08_VERIFY_PACKET.ps1` を実行し、SHA-256、JSON、11/43/15、参照整合、匿名化を検証する。
+3. 01_MANIFEST.jsonと04_SEED_BUNDLE.jsonをJSONとしてparseする。
+4. 04_SEED_BUNDLE.jsonを05_SEED_SCHEMA.jsonで検証する。
+5. 11 flows、43 operations、15 eventTemplates、ID一意性、参照整合を検証する。
+6. secret/credential/PIIらしい値がfixtureにないか検査する。
+7. 確定事項、提案、要確認、競合、禁止事項を分離する。
+
+読み書き境界:
+- docs/inputは読み取り専用。変更、整形、移動、削除をしない。
+- 親ディレクトリや元の情シス業務フォルダを探索しない。
+- 書き込みは現在の実装repo内、docs/input以外だけ。
+- 本番サービス、外部AI、外部URL、CDNへ接続しない。
+- package install、アプリコード生成、DB起動はGate 0ではまだ行わない。
+
+Gate 0で作るもの:
+- PACKET_VALIDATION.md
+- IMPLEMENTATION_PLAN.md
+- RISK_REGISTER.md
+- SPEC_TRACEABILITY.md
+- docs/build-packet/ 配下の設計派生ファイル案。ただし、まだ内容を大量複製せず、生成計画と文書責任を定義する。
+
+PACKET_VALIDATION.mdの必須内容:
+- SHA検証結果
+- JSON/Schema構造検証結果
+- 11/43/15件数
+- ID重複と参照切れ
+- PII/secret検査結果
+- 入力ファイル一覧と版
+- 曖昧点、矛盾、停止要因
+- Gate 1/2を開始可能かの判定
+
+IMPLEMENTATION_PLAN.mdの必須内容:
+- Gate 1とGate 2の順序
+- 画面、domain、DB、RBAC、検索、AI mock、PWA、テストの作業分解
+- 使用技術と依存関係
+- AC-001〜024への対応予定
+- package取得とruntime外部通信を分離した方針
+
+終了時の返答:
+1. 作成ファイル
+2. 検証結果
+3. blocker
+4. Gate 1/2開始可否
+5. 次に貼り付ける指示は03B_GATE1_CONTINUE_PROMPT.txtであること
+
+Gate 0完了後、必ず停止して人の確認を待ってください。

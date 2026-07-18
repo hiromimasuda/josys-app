@@ -1,0 +1,40 @@
+Gate 0の返却物を人が確認し、Gate 1 Clickable Prototypeの開始を承認します。
+
+PACKET_VALIDATION.mdがPASSであり、未解決blockerがないことを再確認してください。PASSでない場合は実装を開始せず停止してください。
+
+今回はGate 1だけを実装し、Gate 2へ進まず停止してください。
+
+実装対象:
+- Next.js + React + TypeScript
+- Tailwind CSS + shadcn/ui相当
+- mock auth
+- 11フロー、43業務、15入口、DEMO_ONLYケース
+- 今日の情シス、発生時、43業務一覧/詳細、次の30日
+- ケース作成、AI構造化回答mock、Emergency Pack
+- 日本語、mobile/desktop、アクセシビリティ
+
+fixture:
+- 04_SEED_BUNDLE.jsonを正規入力とする。
+- 行別A0〜Dは推測せずnullのまま扱う。A0/A1 UIはDEMO_ONLYケースで検証する。
+- 15入口の関連業務mappingはPROPOSED表示とする。
+- 個人名、実メール、実URL、生データを追加しない。
+
+ネットワークと依存:
+- repo内の依存パッケージ取得は、通常のツール承認を受けて実行してよい。
+- グローバルinstallは禁止。
+- アプリruntimeから外部業務API、外部AI、telemetry、CDN、外部画像へ接続しない。
+- AIは決定論的mock、ActionRunnerはDISABLEDだけにする。
+
+Gate 1必須証跡:
+- GATE_1_REPORT.md
+- 実装画面/route一覧
+- 11/43/15件数検証
+- 代表事象から業務詳細まで3クリック以内の確認
+- desktop/mobileスクリーンショット
+- 吉川さん向け30〜45分ウォークスルーチェックリスト
+- 実行したテストと結果
+- 変更ファイル一覧
+- 未実装、既知リスク
+
+完了後は停止し、Gate 1 implementationをCOMPLETE、Gate 1 human acceptanceをPENDINGと報告してください。人の受領へ自分で署名してはいけません。次に使う指示は03C_GATE2_CONTINUE_PROMPT.txtです。
+

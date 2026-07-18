@@ -1,0 +1,344 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.invalid/schemas/josys-ops-navigator-seed-1.0.0.json",
+  "title": "JOSYS Ops Navigator Sanitized Seed Bundle",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "metadata",
+    "flows",
+    "operations",
+    "eventTemplates",
+    "roles",
+    "mockUsers",
+    "demoCases",
+    "sourceAssets",
+    "knowledgeDocuments",
+    "scheduleOccurrences",
+    "approvals",
+    "evidence",
+    "exceptions",
+    "aiMockResponses"
+  ],
+  "properties": {
+    "$schema": {"type": "string"},
+    "metadata": {"$ref": "#/$defs/metadata"},
+    "flows": {
+      "type": "array",
+      "minItems": 11,
+      "maxItems": 11,
+      "items": {"$ref": "#/$defs/flow"}
+    },
+    "operations": {
+      "type": "array",
+      "minItems": 43,
+      "maxItems": 43,
+      "items": {"$ref": "#/$defs/operation"}
+    },
+    "eventTemplates": {
+      "type": "array",
+      "minItems": 15,
+      "maxItems": 15,
+      "items": {"$ref": "#/$defs/eventTemplate"}
+    },
+    "roles": {
+      "type": "array",
+      "minItems": 8,
+      "maxItems": 8,
+      "items": {"$ref": "#/$defs/role"}
+    },
+    "mockUsers": {
+      "type": "array",
+      "minItems": 8,
+      "items": {"$ref": "#/$defs/mockUser"}
+    },
+    "demoCases": {
+      "type": "array",
+      "minItems": 5,
+      "items": {"$ref": "#/$defs/demoCase"}
+    },
+    "sourceAssets": {
+      "type": "array",
+      "minItems": 6,
+      "items": {"$ref": "#/$defs/sourceAsset"}
+    },
+    "knowledgeDocuments": {
+      "type": "array",
+      "minItems": 5,
+      "items": {"$ref": "#/$defs/knowledgeDocument"}
+    },
+    "scheduleOccurrences": {
+      "type": "array",
+      "minItems": 3,
+      "items": {"$ref": "#/$defs/scheduleOccurrence"}
+    },
+    "approvals": {
+      "type": "array",
+      "minItems": 2,
+      "items": {"$ref": "#/$defs/approval"}
+    },
+    "evidence": {
+      "type": "array",
+      "minItems": 2,
+      "items": {"$ref": "#/$defs/evidence"}
+    },
+    "exceptions": {
+      "type": "array",
+      "minItems": 1,
+      "items": {"$ref": "#/$defs/exception"}
+    },
+    "aiMockResponses": {
+      "type": "array",
+      "minItems": 2,
+      "items": {"$ref": "#/$defs/aiMockResponse"}
+    }
+  },
+  "$defs": {
+    "factStatus": {
+      "type": "string",
+      "enum": ["CONFIRMED", "PROPOSED", "NEEDS_CONFIRMATION", "CONFLICTING"]
+    },
+    "operationalPriority": {
+      "type": ["string", "null"],
+      "enum": ["A0", "A1", "B", "C", "D", null]
+    },
+    "risk": {
+      "type": "string",
+      "enum": ["R0", "R1", "R2", "R3"]
+    },
+    "metadata": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["bundleId", "version", "asOf", "locale", "timezone", "syntheticOnly", "demoOnly", "productionSeedAllowed", "fixedNow"],
+      "properties": {
+        "bundleId": {"const": "JOSYS-OPS-NAV-SEED-001"},
+        "version": {"type": "string", "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"},
+        "asOf": {"type": "string", "format": "date"},
+        "locale": {"const": "ja-JP"},
+        "timezone": {"const": "Asia/Tokyo"},
+        "syntheticOnly": {"const": true},
+        "demoOnly": {"const": true},
+        "productionSeedAllowed": {"const": false},
+        "fixedNow": {"type": "string", "format": "date-time"}
+      }
+    },
+    "flow": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "name", "expectedOperationCount", "factStatus"],
+      "properties": {
+        "id": {"type": "string", "pattern": "^F(?:0[1-9]|1[01])$"},
+        "name": {"type": "string", "minLength": 1},
+        "expectedOperationCount": {"type": "integer", "minimum": 1},
+        "factStatus": {"$ref": "#/$defs/factStatus"}
+      }
+    },
+    "operation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "name", "flowId", "operationalPriority", "priorityFactStatus", "factStatus"],
+      "properties": {
+        "id": {"type": "string", "pattern": "^[1-7]-[0-9]{1,2}$"},
+        "name": {"type": "string", "minLength": 1},
+        "flowId": {"type": "string", "pattern": "^F(?:0[1-9]|1[01])$"},
+        "operationalPriority": {"$ref": "#/$defs/operationalPriority"},
+        "priorityFactStatus": {"$ref": "#/$defs/factStatus"},
+        "factStatus": {"$ref": "#/$defs/factStatus"}
+      }
+    },
+    "eventTemplate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "name", "operationIds", "initialRisk", "nameFactStatus", "mappingFactStatus"],
+      "properties": {
+        "id": {"type": "string", "pattern": "^EV-(?:0[1-9]|1[0-5])$"},
+        "name": {"type": "string", "minLength": 1},
+        "operationIds": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {"type": "string", "pattern": "^[1-7]-[0-9]{1,2}$"}
+        },
+        "initialRisk": {"$ref": "#/$defs/risk"},
+        "riskNote": {"type": "string"},
+        "nameFactStatus": {"$ref": "#/$defs/factStatus"},
+        "mappingFactStatus": {"$ref": "#/$defs/factStatus"}
+      }
+    },
+    "role": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "label", "capabilities"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "enum": ["employee", "operator", "approver", "knowledge_editor", "knowledge_approver", "auditor", "admin", "service_account"]
+        },
+        "label": {"type": "string", "minLength": 1},
+        "capabilities": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {"type": "string", "minLength": 1}
+        }
+      }
+    },
+    "mockUser": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "displayName", "email", "roleIds", "synthetic"],
+      "properties": {
+        "id": {"type": "string", "pattern": "^USR-DEMO-[0-9]{3}$"},
+        "displayName": {"type": "string", "pattern": "^DEMO_"},
+        "email": {"type": "string", "pattern": "^[a-z0-9._-]+@example\\.invalid$"},
+        "roleIds": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {"type": "string"}
+        },
+        "synthetic": {"const": true}
+      }
+    },
+    "demoCase": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "title", "eventTemplateId", "operationIds", "operationalPriority", "risk", "status", "assigneeUserId", "dueAt", "demoOnly", "factStatus"],
+      "properties": {
+        "id": {"type": "string", "pattern": "^CASE-DEMO-[0-9]{3}$"},
+        "title": {"type": "string", "minLength": 1},
+        "eventTemplateId": {"type": "string", "pattern": "^EV-(?:0[1-9]|1[0-5])$"},
+        "operationIds": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {"type": "string", "pattern": "^[1-7]-[0-9]{1,2}$"}
+        },
+        "operationalPriority": {"type": "string", "enum": ["A0", "A1", "B", "C", "D"]},
+        "risk": {"$ref": "#/$defs/risk"},
+        "status": {"type": "string", "enum": ["OPEN", "IN_PROGRESS", "WAITING_APPROVAL", "BLOCKED", "COMPLETED"]},
+        "assigneeUserId": {"type": "string", "pattern": "^USR-DEMO-[0-9]{3}$"},
+        "dueAt": {"type": "string", "format": "date-time"},
+        "demoOnly": {"const": true},
+        "factStatus": {"$ref": "#/$defs/factStatus"}
+      }
+    },
+    "sourceAsset": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "title", "uri", "authority", "confidentiality", "status", "approvedForAi", "synthetic", "factStatus"],
+      "properties": {
+        "id": {"type": "string", "pattern": "^SRC-DEMO-[A-Z0-9-]+$"},
+        "title": {"type": "string", "minLength": 1},
+        "uri": {"type": "string", "pattern": "^https://[a-z0-9.-]*example\\.invalid/"},
+        "authority": {"type": "string", "enum": ["AUTHORITATIVE_POLICY", "AUTHORITATIVE_RUNBOOK", "DECISION_RECORD", "EVIDENCE", "BROWSE_VIEW", "REFERENCE", "AUDIT_ONLY"]},
+        "confidentiality": {"type": "string", "enum": ["INTERNAL", "RESTRICTED", "HIGH", "SECRET_POINTER_ONLY"]},
+        "status": {"type": "string", "enum": ["ACTIVE", "STALE", "CONFLICTING", "RETIRED"]},
+        "approvedForAi": {"type": "boolean"},
+        "synthetic": {"const": true},
+        "factStatus": {"$ref": "#/$defs/factStatus"}
+      }
+    },
+    "knowledgeDocument": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "sourceAssetId", "title", "content", "trustedInstructions", "searchable", "synthetic"],
+      "properties": {
+        "id": {"type": "string", "pattern": "^KD-DEMO-[0-9]{3}$"},
+        "sourceAssetId": {"type": "string", "pattern": "^SRC-DEMO-[A-Z0-9-]+$"},
+        "title": {"type": "string", "minLength": 1},
+        "content": {"type": "string", "minLength": 1},
+        "trustedInstructions": {"const": false},
+        "searchable": {"type": "boolean"},
+        "synthetic": {"const": true}
+      }
+    },
+    "scheduleOccurrence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "operationId", "title", "startsAt", "dueAt", "status", "demoOnly"],
+      "properties": {
+        "id": {"type": "string", "pattern": "^SCH-DEMO-[0-9]{3}$"},
+        "operationId": {"type": "string", "pattern": "^[1-7]-[0-9]{1,2}$"},
+        "title": {"type": "string", "minLength": 1},
+        "startsAt": {"type": "string", "format": "date-time"},
+        "dueAt": {"type": "string", "format": "date-time"},
+        "status": {"type": "string", "enum": ["UPCOMING", "DUE", "OVERDUE", "DONE"]},
+        "demoOnly": {"const": true}
+      }
+    },
+    "approval": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "caseId", "risk", "status", "requestedFromUserId", "demoOnly"],
+      "properties": {
+        "id": {"type": "string", "pattern": "^APR-DEMO-[0-9]{3}$"},
+        "caseId": {"type": "string", "pattern": "^CASE-DEMO-[0-9]{3}$"},
+        "risk": {"$ref": "#/$defs/risk"},
+        "status": {"type": "string", "enum": ["PENDING", "APPROVED", "REJECTED"]},
+        "requestedFromUserId": {"type": "string", "pattern": "^USR-DEMO-[0-9]{3}$"},
+        "demoOnly": {"const": true}
+      }
+    },
+    "evidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "caseId", "kind", "uri", "capturedAt", "demoOnly"],
+      "properties": {
+        "id": {"type": "string", "pattern": "^EVD-DEMO-[0-9]{3}$"},
+        "caseId": {"type": "string", "pattern": "^CASE-DEMO-[0-9]{3}$"},
+        "kind": {"type": "string", "enum": ["CHECKLIST", "SCREENSHOT_POINTER", "AUDIT_NOTE", "TEST_RESULT"]},
+        "uri": {"type": "string", "pattern": "^https://[a-z0-9.-]*example\\.invalid/"},
+        "capturedAt": {"type": "string", "format": "date-time"},
+        "demoOnly": {"const": true}
+      }
+    },
+    "exception": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "caseId", "reason", "ownerUserId", "dueAt", "nextReviewAt", "fallback", "status", "demoOnly"],
+      "properties": {
+        "id": {"type": "string", "pattern": "^EXC-DEMO-[0-9]{3}$"},
+        "caseId": {"type": "string", "pattern": "^CASE-DEMO-[0-9]{3}$"},
+        "reason": {"type": "string", "minLength": 1},
+        "ownerUserId": {"type": "string", "pattern": "^USR-DEMO-[0-9]{3}$"},
+        "dueAt": {"type": "string", "format": "date-time"},
+        "nextReviewAt": {"type": "string", "format": "date-time"},
+        "fallback": {"type": "string", "minLength": 1},
+        "status": {"type": "string", "enum": ["OPEN", "RESOLVED"]},
+        "demoOnly": {"const": true}
+      }
+    },
+    "aiMockResponse": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "scenario", "internalAnswerStatus", "internalAnswer", "generalGuidance", "citationSourceIds", "confidence", "escalationRequired", "actionExecutionAllowed", "demoOnly"],
+      "properties": {
+        "id": {"type": "string", "pattern": "^AI-DEMO-[0-9]{3}$"},
+        "scenario": {"type": "string", "minLength": 1},
+        "internalAnswerStatus": {"type": "string", "enum": ["FOUND", "NOT_FOUND", "CONFLICTING", "NOT_AUTHORIZED"]},
+        "internalAnswer": {"type": "string"},
+        "generalGuidance": {"type": "string"},
+        "citationSourceIds": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {"type": "string", "pattern": "^SRC-DEMO-[A-Z0-9-]+$"}
+        },
+        "confidence": {"type": "string", "enum": ["HIGH", "MEDIUM", "LOW"]},
+        "escalationRequired": {"type": "boolean"},
+        "actionExecutionAllowed": {"const": false},
+        "demoOnly": {"const": true}
+      }
+    }
+  },
+  "x-invariants": [
+    "All ids are unique within each collection",
+    "Every operation.flowId references flows.id",
+    "Every eventTemplate.operationIds item references operations.id",
+    "Every mockUser.roleIds item references roles.id",
+    "Every demoCase event, operation and user reference exists",
+    "Every source reference exists",
+    "All operation operationalPriority values remain null in this packet",
+    "No real emails, URLs, people, employee ids, credentials or secrets",
+    "The application must not fetch example.invalid URLs"
+  ]
+}

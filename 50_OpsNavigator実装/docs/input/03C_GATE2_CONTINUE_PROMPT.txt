@@ -1,0 +1,57 @@
+Gate 1の画面確認と吉川さんのウォークスルーが完了し、Gate 2 Local Working MVPの開始を承認します。
+
+Gate 1 human acceptanceが記録されていない場合は、Gate 2を開始せず停止してください。
+
+今回はGate 2だけを実装し、Gate 3〜5へ進まず停止してください。
+
+実装対象:
+- PostgreSQL + Prisma
+- Case、WorkItem、Approval、Evidence、Exception
+- SourceRegistry、PostgreSQL全文検索
+- mock authだが、RBACはUIだけでなくserver/API側でも強制
+- AuditEvent
+- deterministic structured AI mock
+- PWA Emergency Pack
+- unit、integration、e2e
+- Docker Composeでloopback限定のローカル起動
+
+統制:
+- 外部connectorはmock/disabled。
+- `AI_ENABLED=false`、`EXTERNAL_WRITES_ENABLED=false` を既定とする。
+- 本番認証、外部API、AI provider、deployはdisabled stubと手順書まで。
+- 実credentialを作らない。DBのローカル値はloopback限定のDEMO_ONLYと明示する。
+- `NEXT_PUBLIC_*` に秘密を入れない。
+- R2/R3を承認・証跡・緊急理由なしで完了させない。
+- Restricted、AI未承認、stale、conflicting、prompt injection文書の検索制御を実装する。
+
+品質:
+- AC-001〜AC-024を自動テストまたは手動証跡へ1対1で対応付ける。
+- lint、typecheck、unit、integration、e2eを実行する。
+- 11/43/15、参照整合、secret/PII不在を機械検証する。
+- desktop/mobileを実ブラウザで再確認する。
+
+必須成果物:
+- GATE_2_REPORT.md
+- README.md
+- RUNBOOK.md
+- SECURITY.md
+- DEPLOYMENT_NOT_EXECUTED.md
+- docs/build-packet/
+- SPEC_IMPLEMENTATION_MATRIX.md
+- TEST_REPORT.md
+- screenshots/desktop/
+- screenshots/mobile/
+
+最終報告:
+1. Gate 2 technical completion
+2. 起動・停止・初期化・復元手順
+3. 実装画面/機能
+4. lint/typecheck/unit/integration/e2e結果
+5. AC-001〜024対応
+6. 仕様差分、未実装、要確認
+7. 外部接続とdeploy未実施の証跡
+8. 変更ファイル一覧
+9. D-01〜D-14とGate 3以降が未承認であること
+
+完了後は停止してください。Gate 2 business acceptanceはPENDINGとし、人の受領へ自分で署名してはいけません。
+
