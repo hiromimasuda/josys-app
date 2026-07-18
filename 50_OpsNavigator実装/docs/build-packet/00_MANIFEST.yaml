@@ -1,0 +1,50 @@
+# docs/build-packet/ — Fable生成派生パケットの制御manifest
+# 正本は docs/input/02_MASTER_SPEC.snapshot.md。本パケットは派生物であり二重正本にしない。
+packet_version: 1
+packet_status: GATE_0_PLAN_ONLY  # Gate 0では生成計画のみ。本文生成はGate 1/2で実施
+master_document_id: JOSYS-OPS-NAV-FABLE5-001
+master_version: 1.0.1
+input_packet_id: JOSYS-OPS-NAV-FABLE5-INPUT-001
+input_packet_version: 1.0.0
+as_of: "2026-07-17"
+generated_at: "2026-07-18"
+product_role: operational_control_plane
+must_not_become:
+  - employee_master
+  - credential_store
+  - contract_document_store
+  - raw_log_warehouse
+  - autonomous_admin_tool
+fact_labels:
+  - CONFIRMED
+  - PROPOSED
+  - NEEDS_CONFIRMATION
+  - CONFLICTING
+production_writes_allowed: false
+production_deployment_allowed: false
+authority_rules:
+  source_of_truth: ../input/02_MASTER_SPEC.snapshot.md
+  conflict_action: RECORD_CONFLICT_AND_STOP_AFFECTED_WORK
+  duplication_policy: REFERENCE_ONLY  # 仕様本文を大量複製せず、章参照とID参照で書く
+planned_files:
+  # path, 生成ゲート, 責任(owner), 内容方針は 01_GENERATION_PLAN.md を参照
+  - 00_MANIFEST.yaml          # G0 (本ファイル)
+  - 01_GENERATION_PLAN.md     # G0
+  - 01_BUILD_BRIEF.md         # G1
+  - 02_PRODUCT_REQUIREMENTS.md # G1
+  - 03_DOMAIN_MODEL.yaml      # G1
+  - 04_ROUTES_AND_SCREENS.md  # G1
+  - 05_WORKFLOWS_AND_STATE_MACHINES.md # G2
+  - 06_SECURITY_RBAC_DATA_BOUNDARIES.md # G2
+  - 07_AI_ASSISTANT_POLICY.md # G2
+  - 08_SOURCE_TRACEABILITY.csv # G2
+  - 09_ACCEPTANCE_TESTS.md    # G2
+  - 10_IMPLEMENTATION_PHASES.md # G1
+  - 11_FABLE_BUILD_PROMPT.txt # G2（記録用。単独実行禁止の注記付き）
+planned_fixtures:
+  # docs/input/04_SEED_BUNDLE.json を読み取り専用正規入力として変換生成する（G1）
+  - fixtures/flows.json
+  - fixtures/operations.json
+  - fixtures/event-templates.json
+  - fixtures/sources.json
+  - fixtures/sanitized-cases.json
