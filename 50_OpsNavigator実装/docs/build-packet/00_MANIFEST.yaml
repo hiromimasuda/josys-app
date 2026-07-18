@@ -1,7 +1,7 @@
 # docs/build-packet/ — Fable生成派生パケットの制御manifest
 # 正本は docs/input/02_MASTER_SPEC.snapshot.md。本パケットは派生物であり二重正本にしない。
 packet_version: 1
-packet_status: GATE_0_PLAN_ONLY  # Gate 0では生成計画のみ。本文生成はGate 1/2で実施
+packet_status: GATE_1_PARTIAL  # G0計画 + G1派生文書(01/02/03/04/10)生成済み。05-09/11はG2で生成
 master_document_id: JOSYS-OPS-NAV-FABLE5-001
 master_version: 1.0.1
 input_packet_id: JOSYS-OPS-NAV-FABLE5-INPUT-001

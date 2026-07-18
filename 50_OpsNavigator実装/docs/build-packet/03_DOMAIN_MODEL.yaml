@@ -1,0 +1,27 @@
+# 03_DOMAIN_MODEL.yaml (G1生成)
+# master: JOSYS-OPS-NAV-FABLE5-001 v1.0.1
+# 正: packages/domain/src/types.ts (コードが実装の正。本書は索引)
+generated_gate: G1
+source_of_types: packages/domain/src/types.ts
+seed_input: docs/input/04_SEED_BUNDLE.json  # 読み取り専用・直接import(コピー正本なし)
+validation: packages/domain/src/validate.ts  # 11/43/15・一意・参照・null/PROPOSED維持
+entities_g1:  # G1で扱う読み取りエンティティ(§7.1のサブセット)
+  - Flow          # 11
+  - Operation     # 43, operationalPriority: null固定(NEEDS_CONFIRMATION)
+  - EventTemplate # 15, mappingFactStatus: PROPOSED固定
+  - Role          # 8
+  - MockUser      # 8, synthetic固定
+  - DemoCase      # 5, demoOnly固定
+  - SourceAsset   # 6
+  - KnowledgeDocument  # 6, trustedInstructions: false固定
+  - ScheduleOccurrence # 3
+  - Approval      # 2
+  - EvidenceItem  # 2
+  - ExceptionItem # 1
+  - AiMockResponse # 2, actionExecutionAllowed: false固定
+entities_g2_planned:  # §7.1の残り(Prisma化はG2)
+  - Case / WorkItem / ScheduleRule / Runbook / KnowledgeChunk / KnowledgeCandidate
+  - DecisionRecord / AcceptanceCheck / AutomationAsset / AutomationRun
+  - UserRole / AuditEvent / SyncJob / AIAnswerLog
+ai_contract_g1: packages/ai/src/contract.ts  # §8.5サブセット(StructuredMockAnswer)
+time_policy: {storage: UTC ISO8601, display: "JST(+9固定) formatJst()"}
