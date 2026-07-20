@@ -1,0 +1,21 @@
+element,spec_section,implementation,verification
+home_screen,5.2,apps/web/src/app/home/page.tsx,e2e smoke + screenshot
+event_cards_15,5.3,apps/web/src/app/events,e2e smoke(15 cards)
+case_triage,5.4,apps/web/src/app/cases/new + caseService.createCase,e2e + integration(FORBIDDEN_INPUT)
+case_detail_tabs,5.5,apps/web/src/app/cases/[caseId],e2e gate2-flows
+operations_43,5.6-5.7,apps/web/src/app/operations,e2e smoke(43) + unit counts
+calendar_today_30,5.8,apps/web/src/app/calendar,screenshot
+ai_answer_9_sections,5.9+8.5,aiService + AskClient,integration + e2e
+knowledge_registry_search,5.10+8.4,searchService + KnowledgeClient,integration + e2e
+handover_acceptance,5.11,acceptanceService + HandoverClient,integration + e2e(AC-021)
+rbac_8_roles,3.2,server/authz.ts,integration rbac + e2e 403
+confidentiality_filter,3.3,searchService allowedConfidentiality,integration(AC-014)
+case_invariants,7.4,caseService.completeCase,integration completionGuard
+audit_append_only,9.6,server/audit.ts + AuditEvent,integration(AC-019相当)
+prompt_injection_data_only,9.5,searchService+aiService,integration(AC-016)
+secrets_not_stored,9.4,schema design + sanitize.ts,unit + integration
+action_runner_disabled,9.2+10.4,packages/integrations/actionRunner.ts,API 403 route
+emergency_pack_offline,13,public/sw.js + emergency page,e2e offline
+utc_jst,14,domain formatJst + timestamptz,unit + e2e
+seed_pipeline,15.2-15.3,packages/db/prisma/seed.ts,seed count check + verify_packet
+error_format,11.4,server/errors.ts,integration ApiError test

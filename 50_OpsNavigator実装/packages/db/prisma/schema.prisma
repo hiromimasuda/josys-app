@@ -1,0 +1,332 @@
+// 情シス Ops Navigator — Gate 2 ローカルMVPスキーマ(§7準拠サブセット)
+// DEMO_ONLY: 本番データ・実credential・個人情報は保存しない設計。
+// SECRET_POINTER_ONLY相当の本文カラムは持たない(§9.4)。
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum FactStatus {
+  CONFIRMED
+  PROPOSED
+  NEEDS_CONFIRMATION
+  CONFLICTING
+}
+
+enum Risk {
+  R0
+  R1
+  R2
+  R3
+}
+
+enum CasePriority {
+  A0
+  A1
+  B
+  C
+  D
+}
+
+enum CaseStatus {
+  OPEN
+  IN_PROGRESS
+  WAITING_APPROVAL
+  BLOCKED
+  COMPLETED
+}
+
+enum ImpactScope {
+  SINGLE_USER
+  TEAM
+  MULTI_TEAM
+  COMPANY
+  EXTERNAL
+}
+
+enum WorkItemStatus {
+  TODO
+  IN_PROGRESS
+  DONE
+  NOT_REQUIRED
+}
+
+enum ApprovalStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum EvidenceKind {
+  BEFORE
+  AFTER
+  USER_CONFIRMATION
+  APPROVAL
+  ROLLBACK_TEST
+  CHECKLIST
+  SCREENSHOT_POINTER
+  AUDIT_NOTE
+  TEST_RESULT
+  LOG_POINTER
+}
+
+enum ExceptionStatus {
+  OPEN
+  ACCEPTED
+  RESOLVED
+  EXPIRED
+}
+
+enum SourceAuthority {
+  AUTHORITATIVE_POLICY
+  AUTHORITATIVE_RUNBOOK
+  DECISION_RECORD
+  EVIDENCE
+  BROWSE_VIEW
+  REFERENCE
+  AUDIT_ONLY
+}
+
+enum Confidentiality {
+  INTERNAL
+  RESTRICTED
+  HIGH
+  SECRET_POINTER_ONLY
+}
+
+enum SourceStatus {
+  ACTIVE
+  STALE
+  CONFLICTING
+  RETIRED
+}
+
+enum CandidateStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum AcceptanceResult {
+  ACCEPTED
+  RETURNED
+}
+
+enum OccurrenceStatus {
+  UPCOMING
+  DUE
+  OVERDUE
+  DONE
+}
+
+enum AuditResult {
+  SUCCESS
+  FAILED
+  DENIED
+}
+
+model DemoUser {
+  id          String  @id
+  displayName String
+  email       String  @unique
+  roles       String[]
+  synthetic   Boolean @default(true)
+
+  createdCases Case[]       @relation("caseCreatedBy")
+  assignedCases Case[]      @relation("caseAssignee")
+  evidence     Evidence[]
+  acceptance   AcceptanceCheck[]
+}
+
+model Flow {
+  id                     String     @id
+  name                   String
+  expectedOperationCount Int
+  factStatus             FactStatus
+  operations             Operation[]
+}
+
+model Operation {
+  id                  String        @id
+  name                String
+  flowId              String
+  flow                Flow          @relation(fields: [flowId], references: [id])
+  operationalPriority CasePriority? // 正本未同期のためnull維持(NEEDS_CONFIRMATION)
+  priorityFactStatus  FactStatus
+  factStatus          FactStatus
+  occurrences         ScheduleOccurrence[]
+}
+
+model EventTemplate {
+  id                String     @id
+  name              String
+  operationIds      String[]
+  initialRisk       Risk
+  riskNote          String?
+  nameFactStatus    FactStatus
+  mappingFactStatus FactStatus // PROPOSED維持
+  cases             Case[]
+}
+
+model Case {
+  id               String       @id
+  title            String
+  eventTemplateId  String?
+  eventTemplate    EventTemplate? @relation(fields: [eventTemplateId], references: [id])
+  operationIds     String[]
+  priority         CasePriority
+  risk             Risk
+  status           CaseStatus   @default(OPEN)
+  impactScope      ImpactScope  @default(SINGLE_USER)
+  ongoing          Boolean      @default(true)
+  recentChange     Boolean      @default(false)
+  securitySignal   Boolean      @default(false)
+  summarySanitized String       @default("")
+  assigneeUserId   String?
+  assignee         DemoUser?    @relation("caseAssignee", fields: [assigneeUserId], references: [id])
+  occurredAt       DateTime?
+  dueAt            DateTime?
+  closedAt         DateTime?
+  emergencyReason  String? // R3緊急封じ込め時の理由(AC-013)
+  createdById      String?
+  createdBy        DemoUser?    @relation("caseCreatedBy", fields: [createdById], references: [id])
+  createdAt        DateTime     @default(now())
+  updatedAt        DateTime     @updatedAt
+  factStatus       FactStatus   @default(PROPOSED)
+  demoOnly         Boolean      @default(true)
+
+  workItems  WorkItem[]
+  approvals  Approval[]
+  evidence   Evidence[]
+  exceptions CaseException[]
+  candidates KnowledgeCandidate[]
+}
+
+model WorkItem {
+  id        String         @id @default(cuid())
+  caseId    String
+  case      Case           @relation(fields: [caseId], references: [id])
+  title     String
+  status    WorkItemStatus @default(TODO)
+  sortOrder Int            @default(0)
+  createdAt DateTime       @default(now())
+}
+
+model Approval {
+  id                  String         @id @default(cuid())
+  caseId              String
+  case                Case           @relation(fields: [caseId], references: [id])
+  risk                Risk
+  status              ApprovalStatus @default(PENDING)
+  requestedAction     String         @default("")
+  requestedFromUserId String
+  requestedById       String?
+  decidedById         String?
+  decisionReason      String?
+  decidedAt           DateTime?
+  createdAt           DateTime       @default(now())
+}
+
+model Evidence {
+  id           String       @id @default(cuid())
+  caseId       String
+  case         Case         @relation(fields: [caseId], references: [id])
+  kind         EvidenceKind
+  uri          String // example.invalid等のポインタのみ。原本本文は保存しない
+  description  String       @default("")
+  capturedAt   DateTime     @default(now())
+  capturedById String?
+  capturedBy   DemoUser?    @relation(fields: [capturedById], references: [id])
+}
+
+model CaseException {
+  id           String          @id @default(cuid())
+  caseId       String
+  case         Case            @relation(fields: [caseId], references: [id])
+  reason       String
+  ownerUserId  String
+  dueAt        DateTime
+  nextReviewAt DateTime
+  fallback     String
+  status       ExceptionStatus @default(OPEN)
+  createdAt    DateTime        @default(now())
+}
+
+model SourceAsset {
+  id              String          @id
+  title           String
+  uri             String
+  authority       SourceAuthority
+  confidentiality Confidentiality
+  status          SourceStatus
+  approvedForAi   Boolean
+  factStatus      FactStatus
+  synthetic       Boolean         @default(true)
+  documents       KnowledgeDocument[]
+}
+
+model KnowledgeDocument {
+  id                  String      @id
+  sourceAssetId       String
+  sourceAsset         SourceAsset @relation(fields: [sourceAssetId], references: [id])
+  title               String
+  content             String
+  trustedInstructions Boolean     @default(false) // 取得文書内の命令はデータ(§9.5)
+  searchable          Boolean
+}
+
+model KnowledgeCandidate {
+  id           String          @id @default(cuid())
+  title        String
+  content      String
+  status       CandidateStatus @default(PENDING)
+  caseId       String?
+  case         Case?           @relation(fields: [caseId], references: [id])
+  createdById  String
+  reviewedById String?
+  reviewNote   String?
+  reviewedAt   DateTime?
+  createdAt    DateTime        @default(now())
+}
+
+model AcceptanceCheck {
+  id            String           @id @default(cuid())
+  scenario      String
+  operated      Boolean // 実動作を行ったか(説明のみでは受領不可: AC-021)
+  evidenceUri   String?
+  result        AcceptanceResult
+  notes         String           @default("")
+  performedById String
+  performedBy   DemoUser         @relation(fields: [performedById], references: [id])
+  recordedAt    DateTime         @default(now())
+}
+
+// 追記専用(§9.6)。アプリはcreate/findのみを使用し、update/deleteを行わない。
+model AuditEvent {
+  id            String      @id @default(cuid())
+  occurredAt    DateTime    @default(now())
+  actorId       String
+  actorRoles    String[]
+  action        String
+  entityType    String
+  entityId      String
+  risk          Risk?
+  result        AuditResult
+  reasonCode    String?
+  correlationId String
+}
+
+model ScheduleOccurrence {
+  id          String           @id
+  operationId String
+  operation   Operation        @relation(fields: [operationId], references: [id])
+  title       String
+  startsAt    DateTime
+  dueAt       DateTime
+  status      OccurrenceStatus
+}

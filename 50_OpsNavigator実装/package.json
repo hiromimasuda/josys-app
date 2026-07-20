@@ -9,8 +9,21 @@
     "lint": "pnpm --filter web lint",
     "typecheck": "pnpm -r typecheck",
     "test:unit": "vitest run",
+    "test:integration": "vitest run --config vitest.integration.config.ts",
     "test:e2e": "playwright test",
-    "verify:packet": "python3 tools/verify_packet.py"
+    "verify:packet": "python3 tools/verify_packet.py",
+    "db:up": "docker compose up -d db",
+    "db:down": "docker compose down",
+    "db:migrate": "pnpm --filter @ops/db migrate:deploy",
+    "db:seed": "pnpm --filter @ops/db seed",
+    "db:generate": "pnpm --filter @ops/db generate"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "prisma",
+      "@prisma/client",
+      "@prisma/engines"
+    ]
   },
   "devDependencies": {
     "@playwright/test": "^1.49.0",

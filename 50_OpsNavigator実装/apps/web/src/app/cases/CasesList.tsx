@@ -1,14 +1,28 @@
 "use client";
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { eventById, formatJst, seed } from "@ops/domain";
+import { formatJst } from "@ops/domain";
 import { CaseStatusBadge, DemoBadge, PriorityBadge, RiskBadge } from "@/components/badges";
-import { loadLocalCases, type LocalCase } from "@/lib/localCases";
+import { api, describeError } from "@/lib/api";
+
+interface CaseRow {
+  id: string;
+  title: string;
+  priority: "A0" | "A1" | "B" | "C" | "D";
+  risk: "R0" | "R1" | "R2" | "R3";
+  status: "OPEN" | "IN_PROGRESS" | "WAITING_APPROVAL" | "BLOCKED" | "COMPLETED";
+  dueAt: string | null;
+  demoOnly: boolean;
+}
 
 export function CasesList() {
-  const [localCases, setLocalCases] = useState<LocalCase[]>([]);
+  const [cases, setCases] = useState<CaseRow[] | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
   useEffect(() => {
-    setLocalCases(loadLocalCases());
+    api<CaseRow[]>("/api/v1/cases")
+      .then(setCases)
+      .catch((e) => setError(describeError(e)));
   }, []);
 
   return (
@@ -23,55 +37,36 @@ export function CasesList() {
         </Link>
       </div>
 
-      <ul className="space-y-2">
-        {seed.demoCases.map((c) => (
-          <li key={c.id}>
-            <Link
-              href={`/cases/${c.id}`}
-              className="tap flex flex-wrap items-center gap-2 rounded-lg border border-slate-200 bg-white p-3 hover:border-blue-300 hover:bg-blue-50/40"
-            >
-              <span className="font-semibold">{c.title}</span>
-              <PriorityBadge priority={c.operationalPriority} />
-              <RiskBadge risk={c.risk} />
-              <CaseStatusBadge status={c.status} />
-              <span className="text-xs text-slate-500">期限 {formatJst(c.dueAt)}</span>
-              <DemoBadge />
-            </Link>
-          </li>
-        ))}
-      </ul>
-
-      <h2 className="text-base font-bold">ローカル下書き(この端末のみ・DEMO)</h2>
-      {localCases.length === 0 ? (
-        <p className="rounded-lg border border-dashed border-slate-300 bg-white p-3 text-sm text-slate-600">
-          ローカル下書きはありません。「新規ケース作成」から作成できます(Gate 1ではこの端末のlocalStorageにのみ保存されます)。
+      {error && (
+        <p role="alert" className="rounded-lg border border-red-300 bg-red-50 p-3 text-sm text-red-900">
+          {error}
         </p>
-      ) : (
-        <ul className="space-y-2">
-          {localCases.map((c) => {
-            const ev = eventById.get(c.eventTemplateId);
-            return (
-              <li key={c.id}>
-                <details className="rounded-lg border border-slate-200 bg-white p-3">
-                  <summary className="tap cursor-pointer font-semibold">
-                    {c.id}: {ev?.name ?? c.eventTemplateId}(下書き)
-                  </summary>
-                  <dl className="mt-2 grid gap-1 text-sm">
-                    <div><dt className="inline font-medium">発生時刻: </dt><dd className="inline">{formatJst(c.occurredAt)}</dd></div>
-                    <div><dt className="inline font-medium">影響対象: </dt><dd className="inline">{c.impactTarget}</dd></div>
-                    <div><dt className="inline font-medium">影響範囲: </dt><dd className="inline">{c.impactScope}</dd></div>
-                    <div><dt className="inline font-medium">継続中: </dt><dd className="inline">{c.ongoing ? "はい" : "いいえ"}</dd></div>
-                    <div><dt className="inline font-medium">直前の変更: </dt><dd className="inline">{c.recentChange ? "あり" : "なし"}</dd></div>
-                    <div><dt className="inline font-medium">セキュリティ兆候: </dt><dd className="inline">{c.securitySignal ? "あり" : "なし"}</dd></div>
-                    {c.summary && (
-                      <div><dt className="inline font-medium">概要: </dt><dd className="inline">{c.summary}</dd></div>
-                    )}
-                  </dl>
-                </details>
-              </li>
-            );
-          })}
+      )}
+      {cases === null && !error && <p className="text-sm text-slate-500">読み込み中…</p>}
+
+      {cases && (
+        <ul className="space-y-2" data-testid="case-list">
+          {cases.map((c) => (
+            <li key={c.id}>
+              <Link
+                href={`/cases/${c.id}`}
+                className="tap flex flex-wrap items-center gap-2 rounded-lg border border-slate-200 bg-white p-3 hover:border-blue-300 hover:bg-blue-50/40"
+              >
+                <span className="font-semibold">{c.title}</span>
+                <PriorityBadge priority={c.priority} />
+                <RiskBadge risk={c.risk} />
+                <CaseStatusBadge status={c.status} />
+                {c.dueAt && <span className="text-xs text-slate-500">期限 {formatJst(c.dueAt)}</span>}
+                {c.demoOnly && <DemoBadge />}
+              </Link>
+            </li>
+          ))}
         </ul>
+      )}
+      {cases && cases.length === 0 && (
+        <p className="rounded-lg border border-dashed border-slate-300 bg-white p-3 text-sm text-slate-600">
+          表示できるケースがありません(一般社員は自分が作成した依頼のみ表示されます)。
+        </p>
       )}
     </div>
   );

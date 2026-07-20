@@ -1,0 +1,24 @@
+# ローカルDEMO専用のPostgreSQL(§10.3 / 03C)。
+# - 127.0.0.1 バインド限定。外部公開しない。
+# - 資格情報はDEMO_ONLYのローカル値であり、実credentialではない。
+# - 本番DB・社内DB・実データには接続しない。
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: opsnav-demo-db
+    environment:
+      POSTGRES_USER: opsnav_demo
+      POSTGRES_PASSWORD: opsnav_demo_only_local
+      POSTGRES_DB: opsnav_demo
+    ports:
+      - "127.0.0.1:5432:5432"
+    volumes:
+      - opsnav-demo-pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U opsnav_demo -d opsnav_demo"]
+      interval: 3s
+      timeout: 3s
+      retries: 20
+
+volumes:
+  opsnav-demo-pgdata:

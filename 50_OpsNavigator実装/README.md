@@ -1,54 +1,75 @@
-# 情シス Ops Navigator 実装ワークスペース
+# 情シス Ops Navigator — ローカルMVP(Gate 2)
 
-このフォルダは、Claude Fable 5でGate 0〜2を構築する専用の隔離ワークスペースです。現時点ではコード未生成です。
+発生事象から「最初の安全な行動 → 判断者 → 手順 → 証跡 → 完了/引継ぎ」へ案内する社内Webアプリの
+実装ワークスペース。**合成デモデータのみ**で動作し、本番システム・実データ・外部AIには接続しない。
 
-`CLAUDE.md` と `.claude/settings.json` が毎セッションの境界を固定し、input編集、秘密ファイル読取、WebFetch、危険なGit操作、グローバルinstallを拒否します。
+- 仕様の正本: `docs/input/02_MASTER_SPEC.snapshot.md`(読み取り専用)
+- 現在地: **Gate 2 技術完了 / business acceptance PENDING**(`GATE_2_REPORT.md`)
+- Gate 3以降(本番接続・deploy・外部連携)は未承認
 
-## 推奨する渡し方
+## 起動手順(ローカルDEMO)
 
-前提として、会社が利用を承認したClaude契約・アカウントを使います。未承認ならClaude Codeも起動せず、パケットのローカル検証までで停止します。
+前提: Node.js 22+, pnpm 10+, Docker(Compose v2), Python 3(パケット検証用)
 
-Claude Codeで、このフォルダを作業ディレクトリとして開始します。
+```bash
+# 0. 入力パケットの検証(初回・更新時)
+python3 tools/verify_packet.py            # Status: PASS を確認
 
-先にパケットを検証します。
+# 1. 依存取得(repo内のみ。prisma関連のみビルドスクリプト許可済み)
+pnpm install
 
-```powershell
-Set-Location -LiteralPath 'C:\Users\LEGA241-\Documents\情シス業務\20_情シス君_外部委託・実務引継ぎ\50_OpsNavigator実装'
-& '.\docs\input\08_VERIFY_PACKET.ps1'
+# 2. 環境変数(DEMO_ONLYのローカル値)
+cp packages/db/.env.example packages/db/.env
+cp apps/web/.env.example apps/web/.env.local
+
+# 3. DB起動(127.0.0.1限定・DEMO専用) → migration → seed
+pnpm db:up
+pnpm db:migrate
+pnpm db:seed                              # seed OK: 11/43/15 を確認
+
+# 4. ビルドと起動
+pnpm build
+PORT=3111 pnpm start                      # → http://127.0.0.1:3111
 ```
 
-`Status: PASS` を確認してからFable 5を起動します。
+停止・初期化・復元は `RUNBOOK.md` を参照。
 
-```powershell
-$fableGate0Prompt = Get-Content -Raw -LiteralPath '.\docs\input\03A_GATE0_START_PROMPT.txt'
-claude --model fable --effort high --permission-mode default --name 'ops-navigator-gate0' $fableGate0Prompt
+## DEMOユーザー(mock auth)
+
+ヘッダーの「DEMOユーザー」で切替。**認可はサーバー側で強制**されるため、UI操作でも権限外は403になる。
+
+| ユーザー | ロール | 試せること |
+|---|---|---|
+| DEMO_OPERATOR(既定) | operator | ケース作成・証跡・完了(R2/R3はガードされる) |
+| DEMO_APPROVER | approver | 承認・例外の判断 |
+| DEMO_EMPLOYEE | employee | 検索がINTERNAL限定になる/管理403 |
+| DEMO_ADMIN | admin | 管理メタデータ表示 |
+| DEMO_KNOWLEDGE_APPROVER | knowledge_approver | FAQ候補の承認・公開 |
+
+## テスト
+
+```bash
+pnpm lint && pnpm typecheck && pnpm test:unit
+pnpm db:seed && pnpm test:integration     # DB必須。実行毎に再seed
+pnpm build && pnpm db:seed && pnpm test:e2e   # スクリーンショットも更新される
 ```
 
-`--permission-mode bypassPermissions` や `--dangerously-skip-permissions` は使用しません。
-
-Gate 0の返却物を確認し、問題がなければ同じClaude Codeセッションへ次を入力します。
+## 構成
 
 ```text
-次のファイルをGate 1の実行指示として読み、本文に従ってください: @docs/input/03B_GATE1_CONTINUE_PROMPT.txt
+apps/web             Next.js 15 (App Router, UI + /api/v1)
+packages/domain      型・enum・seed読込+11/43/15検証・禁止入力検知
+packages/db          Prisma schema/migrations/seed (@ops/db)
+packages/ai          AI回答契約(§8.5)とmock
+packages/integrations DisabledActionRunner / MockSourceConnector
+tests/{unit,integration,e2e}
+docs/input           入力パケット(読み取り専用・変更禁止)
+docs/build-packet    派生設計文書
+tools/verify_packet.py  入力パケット検証(pwsh非対応環境向け)
 ```
 
-Gate 1完成後、吉川さんの30〜45分ウォークスルーを行います。画面と導線を受領した後だけ、同じセッションへ次を入力します。
+## ゲート運用(要約)
 
-```text
-次のファイルをGate 2の実行指示として読み、本文に従ってください: @docs/input/03C_GATE2_CONTINUE_PROMPT.txt
-```
-
-## Claude.ai Projectへ渡す場合
-
-会社で承認された非公開Projectだけを使用し、`docs/input/` の11ファイルを個別に追加します。最初のチャットへ `03A_GATE0_START_PROMPT.txt` を貼り付けます。
-
-ただし、ローカルrepo、Docker、Playwright、テストまで構築しきる用途はClaude Codeを推奨します。承認されていない個人アカウントや保存条件不明の環境へは渡しません。
-
-## Gate別の停止点
-
-- Gate 0: パケット検証、実装計画、リスク、仕様対応表を返して停止
-- Gate 1: クリック可能プロトタイプとdesktop/mobile確認後、人が受領
-- Gate 2: Gate 1受領後にローカルMVP、DB、RBAC、検索、監査、テスト
-- Gate 3以降: 別承認があるまで禁止
-
-詳細は `docs/input/00_READ_ME_FIRST.md` を参照してください。
+Gate 0(検証・計画) → 人確認 → Gate 1(プロトタイプ) → 人受領 → **Gate 2(ローカルMVP・現在)** →
+人受領 → Gate 3〜5は**別承認**(本仕様だけでは本番接続・deploy・書き戻しを許可しない)。
+詳細は `docs/input/00_READ_ME_FIRST.md` と `06_GATE_ACCEPTANCE_CHECKLIST.md`。

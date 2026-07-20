@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
-import { detectForbiddenInput } from "@/lib/localCases";
+import { detectForbiddenInput } from "@ops/domain";
 
-describe("forbidden input detection (§5.4)", () => {
+describe("forbidden input detection (§5.4/§9.4 共有実装)", () => {
   it("flags password-like text", () => {
     expect(detectForbiddenInput("パスワードは abc123 です")).toBeTruthy();
     expect(detectForbiddenInput("password: hunter2")).toBeTruthy();

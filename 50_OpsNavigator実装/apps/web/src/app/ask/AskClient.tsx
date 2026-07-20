@@ -1,20 +1,34 @@
 "use client";
 import { useState } from "react";
-import { buildMockAnswer, type StructuredMockAnswer } from "@ops/ai";
+import type { StructuredMockAnswer } from "@ops/ai";
 import { AuthorityBadge, GeneralGuidanceBadge, PriorityBadge, RiskBadge } from "@/components/badges";
 import { Section } from "@/components/Section";
+import { api, describeError } from "@/lib/api";
 
-const presets = ["全社のWi-Fiがつながらない", "見たことがないSaaSのエラーが出ている"];
+const presets = [
+  "全社のWi-Fiがつながらない",
+  "見たことがないSaaSのエラーが出ている",
+  "Driveの外部共有を設定したい",
+];
 
-// §5.9 AI情シスガイド。決定論的mock(外部AI未接続・APIキー不要)。
+// §5.9 AI情シスガイド。サーバー側の決定論mock(AI_ENABLED=false・外部AI未接続)。
 export function AskClient() {
   const [query, setQuery] = useState("");
   const [answer, setAnswer] = useState<StructuredMockAnswer | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
-  const ask = (q: string) => {
+  const ask = async (q: string) => {
     if (!q.trim()) return;
     setQuery(q);
-    setAnswer(buildMockAnswer(q));
+    setError(null);
+    try {
+      setAnswer(await api<StructuredMockAnswer>("/api/v1/ai/answer", {
+        method: "POST",
+        body: JSON.stringify({ question: q }),
+      }));
+    } catch (e) {
+      setError(describeError(e));
+    }
   };
 
   return (
@@ -59,6 +73,12 @@ export function AskClient() {
         </div>
       </form>
 
+      {error && (
+        <p role="alert" className="rounded-lg border border-red-400 bg-red-100 p-3 text-sm font-semibold text-red-900">
+          {error}
+        </p>
+      )}
+
       {answer && (
         <div className="space-y-3" data-testid="ai-answer">
           <p className="text-xs text-slate-500">
@@ -97,6 +117,16 @@ export function AskClient() {
               ))}
             </ul>
           </Section>
+
+          {answer.conflictSources && answer.conflictSources.length > 0 && (
+            <p
+              data-testid="conflict-warning"
+              className="rounded-lg border border-red-400 bg-red-50 p-3 text-sm font-semibold text-red-900"
+            >
+              要突合: 正本が競合しています。AIはどちらも確定として扱いません —{" "}
+              {answer.conflictSources.map((s) => s.title).join(" / ")}
+            </p>
+          )}
 
           <Section title="4. 社内で確定していること">
             {answer.internalPolicy.conclusion ? (

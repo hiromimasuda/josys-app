@@ -6,7 +6,7 @@ import type { NextConfig } from "next";
 // - 外部フォント・CDN・外部画像は使用しない(コード上も存在しない)
 const nextConfig: NextConfig = {
   reactStrictMode: true,
-  transpilePackages: ["@ops/domain", "@ops/ai"],
+  transpilePackages: ["@ops/domain", "@ops/ai", "@ops/db", "@ops/integrations"],
   images: { unoptimized: true },
 };
 

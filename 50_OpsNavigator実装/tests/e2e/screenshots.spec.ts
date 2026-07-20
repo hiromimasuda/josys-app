@@ -12,6 +12,8 @@ const pages: [string, string][] = [
   ["/cases/new", "case-new"],
   ["/calendar", "calendar"],
   ["/knowledge", "knowledge"],
+  ["/approvals", "approvals"],
+  ["/handover", "handover"],
   ["/emergency", "emergency"],
 ];
 

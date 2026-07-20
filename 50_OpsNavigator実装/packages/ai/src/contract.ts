@@ -39,4 +39,6 @@ export interface StructuredMockAnswer {
   uncertainties: string[];
   updatedAtLabel: string;
   actionExecutionAllowed: false;
+  // 正本競合時のみ: 統合せず併記する対象(要突合)
+  conflictSources?: { sourceId: string; title: string; authority: string }[];
 }

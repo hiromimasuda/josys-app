@@ -1,8 +1,8 @@
 "use client";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { seed } from "@ops/domain";
-import { detectForbiddenInput, saveLocalCase } from "@/lib/localCases";
+import { detectForbiddenInput, seed } from "@ops/domain";
+import { api, describeError } from "@/lib/api";
 
 const scopes = [
   ["SINGLE_USER", "本人のみ"],
@@ -24,7 +24,7 @@ export function CaseNewForm({ initialEventId }: { initialEventId: string }) {
   const [summary, setSummary] = useState("");
   const [error, setError] = useState<string | null>(null);
 
-  const onSubmit = (e: React.FormEvent) => {
+  const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
     if (!eventId) {
@@ -42,17 +42,25 @@ export function CaseNewForm({ initialEventId }: { initialEventId: string }) {
       );
       return;
     }
-    saveLocalCase({
-      eventTemplateId: eventId,
-      occurredAt: new Date(`${occurredAt}:00+09:00`).toISOString(),
-      impactTarget: impactTarget.trim(),
-      impactScope,
-      ongoing: ongoing === "yes",
-      recentChange: recentChange === "yes",
-      securitySignal: securitySignal === "yes",
-      summary: summary.trim(),
-    });
-    router.push("/cases");
+    try {
+      // サーバー側でも禁止入力・RBAC・妥当性を再検証する(クライアント検知は補助)
+      const created = await api<{ id: string }>("/api/v1/cases", {
+        method: "POST",
+        body: JSON.stringify({
+          eventTemplateId: eventId,
+          occurredAt: new Date(`${occurredAt}:00+09:00`).toISOString(),
+          impactTarget: impactTarget.trim(),
+          impactScope,
+          ongoing: ongoing === "yes",
+          recentChange: recentChange === "yes",
+          securitySignal: securitySignal === "yes",
+          summary: summary.trim(),
+        }),
+      });
+      router.push(`/cases/${created.id}`);
+    } catch (err) {
+      setError(describeError(err));
+    }
   };
 
   const fieldClass = "tap w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm";
@@ -179,10 +187,10 @@ export function CaseNewForm({ initialEventId }: { initialEventId: string }) {
           type="submit"
           className="tap w-full rounded-lg bg-blue-800 px-4 py-2 font-bold text-white hover:bg-blue-900"
         >
-          ローカル下書きとして保存(DEMO)
+          ケースを作成(DEMO DBへ保存)
         </button>
         <p className="text-xs text-slate-500">
-          Gate 1ではこの端末のlocalStorageにのみ保存されます。サーバー保存・承認フローはGate 2で実装します。
+          ローカルDEMO DB(127.0.0.1)にのみ保存されます。外部送信はありません。
         </p>
       </form>
     </div>

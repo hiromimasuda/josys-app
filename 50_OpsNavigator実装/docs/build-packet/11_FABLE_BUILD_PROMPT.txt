@@ -1,0 +1,18 @@
+【記録用・単独使用禁止】
+正式な段階別指示は docs/input/03A/03B/03C であり、本ファイルを直接投入してはならない。
+これはGate 0〜2で実際に適用された指示の要約記録である(master JOSYS-OPS-NAV-FABLE5-001 v1.0.1)。
+
+適用された運用:
+1. Gate 0: 03A + pwsh代替検証(tools/verify_packet.py)。成果物4点+build-packet計画。人確認後に停止解除。
+2. Gate 1: 03B + 人の制約(package事前報告、docs/input読み取り専用、push保留→後に個別承認)。
+   実装後にGATE_1_REPORT/WALKTHROUGH_CHECKLISTで停止。人の受領記録(GATE_1_ACCEPTANCE.md)。
+3. Gate 2: 03C + 人の承認(prisma/zod/tsx、prisma限定ビルドスクリプト、binaries.prisma.sh、
+   Docker+postgres:16-alpine、例外時のみ停止)。技術完了で停止し、business acceptance PENDING。
+
+環境固有の逸脱(理由と代替はPACKET_VALIDATION.md/GATE_2_REPORT.mdに記録):
+- pwsh不在 → Python同等検証
+- Docker Hub CDNがプロキシ403 → mirror.gcr.io経由で同一公式イメージ取得(digest記録)
+- dockerdは検証環境で手動起動
+
+禁止事項(全ゲート共通・遵守済み): docs/input変更 / 本番接続 / 外部AI / deploy / PR・merge /
+実データ・実credential / Gate 3以降。

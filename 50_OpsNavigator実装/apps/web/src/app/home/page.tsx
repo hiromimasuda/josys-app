@@ -1,23 +1,29 @@
 import Link from "next/link";
-import {
-  FIXED_NOW,
-  formatJst,
-  homeSelectors,
-  operationById,
-  seed,
-  userById,
-} from "@ops/domain";
+import { prisma } from "@ops/db";
+import { FIXED_NOW, formatJst } from "@ops/domain";
 import { CaseStatusBadge, DemoBadge, FactStatusBadge, PriorityBadge, RiskBadge } from "@/components/badges";
 import { EmptyState, Section } from "@/components/Section";
 
-// §5.2 今日の情シス。全43業務表・完了履歴全件・P0-P2混在・秘密情報は表示しない。
-export default function HomePage() {
-  const a0 = homeSelectors.a0Open();
-  const r3 = homeSelectors.r3Open();
-  const a1 = homeSelectors.a1DueSoon();
-  const approvals = homeSelectors.pendingApprovals();
-  const next30 = homeSelectors.next30Days();
-  const staleSources = homeSelectors.knowledgeNeedsUpdate();
+// §5.2 今日の情シス(Gate 2: DB参照)。全43業務表・完了履歴全件・秘密情報は表示しない。
+export const dynamic = "force-dynamic";
+
+export default async function HomePage() {
+  const a1Horizon = new Date(FIXED_NOW.getTime() + 3 * 24 * 60 * 60 * 1000);
+  const [a0, r3, a1, approvals, next30, staleSources] = await Promise.all([
+    prisma.case.findMany({ where: { priority: "A0", status: { not: "COMPLETED" } }, orderBy: { id: "asc" } }),
+    prisma.case.findMany({ where: { risk: "R3", status: { not: "COMPLETED" } } }),
+    prisma.case.findMany({
+      where: { priority: "A1", status: { not: "COMPLETED" }, dueAt: { lte: a1Horizon } },
+      orderBy: { dueAt: "asc" },
+    }),
+    prisma.approval.findMany({
+      where: { status: "PENDING" },
+      include: { case: { select: { id: true, title: true } } },
+      orderBy: { createdAt: "asc" },
+    }),
+    prisma.scheduleOccurrence.findMany({ orderBy: { dueAt: "asc" }, include: { operation: true } }),
+    prisma.sourceAsset.findMany({ where: { status: { in: ["STALE", "CONFLICTING"] } }, orderBy: { id: "asc" } }),
+  ]);
 
   return (
     <div className="space-y-4">
@@ -40,10 +46,10 @@ export default function HomePage() {
                   className="tap flex flex-wrap items-center gap-2 rounded-lg border border-red-200 bg-red-50/50 p-3 hover:bg-red-50"
                 >
                   <span className="font-semibold">{c.title}</span>
-                  <PriorityBadge priority={c.operationalPriority} />
+                  <PriorityBadge priority={c.priority} />
                   <RiskBadge risk={c.risk} />
                   <CaseStatusBadge status={c.status} />
-                  <span className="text-xs text-slate-600">期限 {formatJst(c.dueAt)}</span>
+                  {c.dueAt && <span className="text-xs text-slate-600">期限 {formatJst(c.dueAt.toISOString())}</span>}
                 </Link>
               </li>
             ))}
@@ -69,9 +75,9 @@ export default function HomePage() {
                   className="tap flex flex-wrap items-center gap-2 rounded-lg border border-amber-200 p-3 hover:bg-amber-50"
                 >
                   <span className="font-semibold">{c.title}</span>
-                  <PriorityBadge priority={c.operationalPriority} />
+                  <PriorityBadge priority={c.priority} />
                   <RiskBadge risk={c.risk} />
-                  <span className="text-xs text-slate-600">期限 {formatJst(c.dueAt)}</span>
+                  {c.dueAt && <span className="text-xs text-slate-600">期限 {formatJst(c.dueAt.toISOString())}</span>}
                 </Link>
               </li>
             ))}
@@ -84,64 +90,54 @@ export default function HomePage() {
           <EmptyState>承認待ちはありません。</EmptyState>
         ) : (
           <ul className="space-y-2">
-            {approvals.map((a) => {
-              const c = seed.demoCases.find((dc) => dc.id === a.caseId);
-              const approver = userById.get(a.requestedFromUserId);
-              return (
-                <li key={a.id}>
-                  <Link
-                    href={`/cases/${a.caseId}`}
-                    className="tap flex flex-wrap items-center gap-2 rounded-lg border border-purple-200 p-3 hover:bg-purple-50"
-                  >
-                    <span className="font-semibold">{c?.title ?? a.caseId}</span>
-                    <RiskBadge risk={a.risk} />
-                    <span className="text-xs text-slate-600">
-                      承認依頼先: {approver?.displayName ?? a.requestedFromUserId}
-                    </span>
-                  </Link>
-                </li>
-              );
-            })}
+            {approvals.map((a) => (
+              <li key={a.id}>
+                <Link
+                  href={`/cases/${a.caseId}`}
+                  className="tap flex flex-wrap items-center gap-2 rounded-lg border border-purple-200 p-3 hover:bg-purple-50"
+                >
+                  <span className="font-semibold">{a.case.title}</span>
+                  <RiskBadge risk={a.risk} />
+                </Link>
+              </li>
+            ))}
           </ul>
         )}
       </Section>
 
       <Section title="4. 失敗した自動化・手動代替中">
         <EmptyState>
-          現在、失敗した自動化はありません。AutomationRegistryの監視はGate 2以降で実装予定です。
+          現在、失敗した自動化はありません。AutomationRegistryの監視はGate 3以降で実装予定です。
         </EmptyState>
       </Section>
 
       <Section title="5. 次の30日" tone="blue">
         <ul className="space-y-2">
-          {next30.map((s) => {
-            const op = operationById.get(s.operationId);
-            return (
-              <li key={s.id}>
-                <Link
-                  href={`/operations/${s.operationId}`}
-                  className="tap flex flex-wrap items-center gap-2 rounded-lg border border-blue-100 p-3 hover:bg-blue-50"
-                >
-                  <span className="font-semibold">{s.title}</span>
-                  <span className="text-xs text-slate-600">
-                    {op ? `${op.id} ${op.name}` : s.operationId} / 期限 {formatJst(s.dueAt)}
+          {next30.map((s) => (
+            <li key={s.id}>
+              <Link
+                href={`/operations/${s.operationId}`}
+                className="tap flex flex-wrap items-center gap-2 rounded-lg border border-blue-100 p-3 hover:bg-blue-50"
+              >
+                <span className="font-semibold">{s.title}</span>
+                <span className="text-xs text-slate-600">
+                  {s.operation.id} {s.operation.name} / 期限 {formatJst(s.dueAt.toISOString())}
+                </span>
+                {s.status === "OVERDUE" && (
+                  <span className="rounded border border-red-300 bg-red-50 px-2 py-0.5 text-xs font-bold text-red-800">
+                    期限超過
                   </span>
-                  {s.status === "OVERDUE" && (
-                    <span className="rounded border border-red-300 bg-red-50 px-2 py-0.5 text-xs font-bold text-red-800">
-                      期限超過
-                    </span>
-                  )}
-                </Link>
-              </li>
-            );
-          })}
+                )}
+              </Link>
+            </li>
+          ))}
         </ul>
       </Section>
 
       <Section title="6. 不在時の引継ぎ">
         <p className="text-sm text-slate-700">
           担当者不在時の一次受け・承認の代替は<Link href="/handover" className="text-blue-800 underline">引継ぎ</Link>
-          を確認してください(受領記録はGate 2で実装)。
+          を確認してください。
         </p>
       </Section>
 
@@ -164,7 +160,6 @@ export default function HomePage() {
         </p>
       </Section>
 
-      {/* 15カード起点への導線: 代表事象から3クリック以内(KPI)の起点 */}
       <Section title="何か起きたら" tone="red">
         <Link
           href="/events"

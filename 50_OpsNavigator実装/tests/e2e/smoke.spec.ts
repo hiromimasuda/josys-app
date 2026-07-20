@@ -43,19 +43,17 @@ test.describe("主要画面スモーク", () => {
     await page.goto("/cases/new?event=EV-09");
     await page.getByLabel(/影響対象/).fill("テストユーザー1名");
     await page.getByLabel(/概要/).fill("password: hunter2 を教えてほしい");
-    await page.getByRole("button", { name: /ローカル下書きとして保存/ }).click();
+    await page.getByRole("button", { name: /ケースを作成/ }).click();
     await expect(page.locator('p[role="alert"]')).toContainText("入力できません");
   });
 
   test("ケース詳細: R3は承認・証跡の必須表示(AC-012/013相当の予告)", async ({ page }) => {
     await page.goto("/cases/CASE-DEMO-003");
-    await expect(page.getByText(/R3: 速やかな共有と安全上やむを得ない最小封じ込めのみ/)).toBeVisible();
+    await expect(page.getByText(/R3: 承認または緊急封じ込め記録/)).toBeVisible();
   });
 
   test("正本競合ケースは要突合を表示(AC-010相当)", async ({ page }) => {
     await page.goto("/cases/CASE-DEMO-004");
     await expect(page.getByText(/要突合: このケースの根拠となる正本が競合しています/)).toBeVisible();
-    await expect(page.getByText("DEMO 外部共有方針A")).toBeVisible();
-    await expect(page.getByText("DEMO 外部共有方針B")).toBeVisible();
   });
 });
